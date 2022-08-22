@@ -1,1 +1,6 @@
 .DS_Store
+translator
+.vscode
+LSLSyntaxHighlighting
+*.xcworkspace
+*/*.xcworkspace
