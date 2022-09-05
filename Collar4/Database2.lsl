@@ -9,7 +9,7 @@
 // version: 2021-12-29
 
 integer OPTION_DEBUG = 0;
-key databaseQuery;
+list databaseQuery;
 string myQueryStatus;
 
 string start_date;
@@ -69,7 +69,7 @@ sendDatabaseQuery(integer iSlot) {
         displayCentered("Accessing DB");
         string URL = "http://sl.blackgazza.com/read_inmate.cgi?key=" + AgentKeyWithRole((string)llGetOwner(),iSlot);
         sayDebug("sendDatabaseQuery:"+URL);
-        databaseQuery = llHTTPRequest(URL,[],"");
+        databaseQuery += [llHTTPRequest(URL,[],"")];
         characterSlot = iSlot;
     } else {
         sayDebug("sendDatabaseQuery unattached");
@@ -159,6 +159,10 @@ default
     http_response(key request_id, integer status, list metadata, string message)
     // handle the response from the crime database
     {
+        integer listRequestIndex = llListFindList(databaseQuery, [request_id]);
+        if(listRequestIndex == -1 && status != 200) return; // does not process the response if this script did not send a request or the Web API does not work correctly
+        databaseQuery = llDeleteSubList(databaseQuery, listRequestIndex, listRequestIndex); // removes unnecessary request_id from memory to save
+
         displayCentered("status "+(string)status);
         string assetNumber = "P-00000";
         string theCrime = "Unregistered";
