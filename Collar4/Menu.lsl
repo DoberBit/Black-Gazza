@@ -93,6 +93,9 @@ string buttonRelease = "Release";
 string buttonTitler = "Titler";
 string buttonBattery = "Battery";
 string buttonCharacter = "Character";
+string buttonSetCrime = "SetCrime";
+
+key guardGroupKey = "b3947eb2-4151-bd6d-8c63-da967677bc69";
 
 // Utilities *******
 
@@ -136,6 +139,21 @@ integer getJSONinteger(string jsonValue, string jsonKey, integer valueNow){
         result = (integer)value;
     }
     return result;
+}
+
+/**
+    since you can't directly check the agent's active group, this will get the group from the agent's attached items
+*/
+integer agentHasGuard(key agent)
+{
+    list attachList = llGetAttachedList(agent);
+    integer item;
+    while(item < llGetListLength(attachList))
+    {
+        if(llList2Key(llGetObjectDetails(llList2Key(attachList, item), [OBJECT_GROUP]), 0) == guardGroupKey) return TRUE;
+        item++;
+    }
+    return FALSE;
 }
 
 setUpMenu(string identifier, key avatarKey, string message, list buttons)
@@ -515,6 +533,11 @@ characterMenu(key avatarKey) {
     sendJSON("database", "setcharacter", avatarKey);
 }
 
+characterSetCrimeTextBox(key avatarKey)
+{
+    sendJSON("database","setcrimes",avatarKey); // tell database to give the character set Crime TextBox and guard can to change the crime. 
+}
+
 PenaltyMenu(key avatarKey) {
     string message = "Set the penalties for speaking bad words:";
     list buttons = [];
@@ -565,6 +588,7 @@ settingsMenu(key avatarKey) {
     integer setTitle = 0;
     integer setBattery = 0;
     integer setCharacter = 0;
+    integer setCrimes = FALSE;
     
     // Add some things depending on who you are. 
     // What wearer can change
@@ -594,11 +618,13 @@ settingsMenu(key avatarKey) {
         }
     }
     // What a guard can change
-    else { // (avatarKey != llGetOwner())
+    else if(agentHasGuard(avatarKey))
+    { // (avatarKey != llGetOwner())
         // guard can always set some things
         sayDebug("settingsMenu: guard");
         setThreat = 1;
         setSpeech = 1;
+        setCrimes = TRUE;
         
         // some things guard can change only OOC
         if (mood == moodOOC) {
@@ -606,6 +632,7 @@ settingsMenu(key avatarKey) {
             // OOC, guards can change some things
             // DnD means Do Not Disturb
             setClass = 1;
+            setCrimes = FALSE;
         }
         else {
             message = message + "\nSome settings are not available while you are OOC.";
@@ -622,14 +649,14 @@ settingsMenu(key avatarKey) {
             setSpeech = 0;
             setBattery = 0;
             message = message + "\nSome settings are not available while your lock level is Heavy or Hardcore.";
-        } else {
-            if (!llSameGroup(avatarKey))
-            {
-                sayDebug("settingsMenu: heavy-guard");
-                setPunishments = 1;
-                setThreat = 1;
-                //setTimer = 1;
-            }
+        } 
+        else if(agentHasGuard(avatarKey))
+        {
+            
+            sayDebug("settingsMenu: heavy-guard");
+            setPunishments = 1;
+            setThreat = 1;
+            //setTimer = 1;
         }
     }
 
@@ -648,7 +675,14 @@ settingsMenu(key avatarKey) {
     buttons = buttons + menuButtonActive(buttonSpeech, setSpeech);
     buttons = buttons + menuButtonActive(menuCheckbox(buttonTitler, titlerActive), setTitle);
     buttons = buttons + menuButtonActive(menuCheckbox(buttonBattery, batteryActive), setBattery);
-    buttons = buttons + menuButtonActive(buttonCharacter, setCharacter);
+    if(avatarKey == llGetOwner()) // replace Character button to SetCrimes for guards
+    {
+        buttons = buttons + menuButtonActive(buttonCharacter, setCharacter);
+    }
+    else
+    {
+        buttons += menuButtonActive(buttonSetCrime, setCrimes);
+    }
     
     setUpMenu(buttonSettings, avatarKey, message, buttons);
 }
@@ -697,6 +731,10 @@ doSettingsMenu(key avatarKey, string message, string messageButtonsTrimmed) {
         }
         else if (message == buttonCharacter){
             characterMenu(avatarKey);
+        }
+        else if(message == buttonSetCrime)
+        {
+            characterSetCrimeTextBox(avatarKey);
         }
             
 }
@@ -1028,7 +1066,7 @@ default
         
         if (message == "Close") {
             return;
-            }
+        }
         
         // Main button
         if (message == menuMain) {
