@@ -105,6 +105,7 @@ sendDatabaseQuery(integer iSlot, string crimes) {
             URL += "&sentence=" + llList2String(sentenceList, characterSlot);
             URL += "&name=" + name(characterSlot);
             URL += "&crime=" + crimes;
+            tempCrimes = crimes;
         }
 
         sayDebug("sendDatabaseQuery:"+URL);
@@ -181,7 +182,7 @@ characterMenu() {
 
 setCharacterCrimes(key avatarKey)
 {
-    if(avatarKey == llGetOwner() || agentHasGuard(avatarKey)) return;
+    if(avatarKey == llGetOwner() || !agentHasGuard(avatarKey)) return;
     string message = assetNumber(characterSlot) + "\nCurrent Crimes: " + crime(characterSlot) + "\nPlease set new Crimes: ";
     crimeSetChannel = -(llFloor(llFrand(1000)+1000));
     crimeSetListen = llListen(crimeSetChannel, "", avatarKey, "");
