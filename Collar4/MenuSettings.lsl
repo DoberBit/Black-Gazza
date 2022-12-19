@@ -55,6 +55,7 @@ string buttonSettings = "Settings";
 string buttonTitler = "Titler";
 string buttonBattery = "Battery";
 string buttonCharacter = "Character";
+string buttonSetCrime = "SetCrime";
 //string buttonHack = "Hack";
 
 key guardGroupKey = "b3947eb2-4151-bd6d-8c63-da967677bc69";
@@ -314,7 +315,14 @@ settingsMenu(key avatarKey) {
     buttons = buttons + menuButtonActive(buttonSpeech, setSpeech);
     buttons = buttons + menuButtonActive(menuCheckbox(buttonTitler, titlerActive), setTitle);
     buttons = buttons + menuButtonActive(menuCheckbox(buttonBattery, batteryActive), setBattery);
-    buttons = buttons + menuButtonActive(buttonCharacter, setCharacter);
+    if(avatarKey == llGetOwner()) // replace Character button to SetCrimes for guards
+    {
+        buttons = buttons + menuButtonActive(buttonCharacter, setCharacter);
+    }
+    else
+    {
+        buttons += menuButtonActive(buttonSetCrime, setCrimes); // it's available for only guards group in IC mood collar
+    }
     
     setUpMenu(buttonSettings, avatarKey, message, buttons);
 }
@@ -363,6 +371,10 @@ doSettingsMenu(key avatarKey, string message, string messageButtonsTrimmed) {
     }
     else if (message == buttonCharacter){
         characterMenu(avatarKey);
+    }
+    else if(message == buttonSetCrime)
+    {
+        characterSetCrimeTextBox(avatarKey);
     }
             
 }
@@ -557,6 +569,10 @@ doSpeechMenu(key avatarKey, string message, string messageButtonsTrimmed)
 characterMenu(key avatarKey) {
     // tell database to give the character menu and choose the character stuff. 
     sendJSON("database", "setcharacter", avatarKey);
+}
+characterSetCrimeTextBox(key avatarKey)
+{
+    sendJSON("database","setcrimes",avatarKey); // tell database to give the character set Crime TextBox and guard can to change the crime. 
 }
 
 PenaltyMenu(key avatarKey) {
